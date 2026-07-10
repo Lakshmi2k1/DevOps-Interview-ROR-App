@@ -1,0 +1,78 @@
+name: Build and push images to ECR
+
+# Builds the Rails and Nginx Docker images and pushes them to Amazon ECR on
+# every push to main. Authentication uses GitHub OIDC (no static AWS keys) by
+# assuming the IAM role created in Terraform (output: github_actions_role_arn).
+#
+# Required repository configuration (Settings -> Secrets and variables -> Actions):
+#   Secret:    AWS_ROLE_ARN   = <terraform output github_actions_role_arn>
+#   Variable:  AWS_REGION     = us-east-1        (optional, defaults below)
+#   Variable:  ECR_RAILS_REPO = mallow-ror-dev/rails_app
+#   Variable:  ECR_NGINX_REPO = mallow-ror-dev/nginx
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "infrastructure/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+permissions:
+  id-token: write # required for OIDC
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  ECR_RAILS_REPO: ${{ vars.ECR_RAILS_REPO || 'mallow-ror-dev/rails_app' }}
+  ECR_NGINX_REPO: ${{ vars.ECR_NGINX_REPO || 'mallow-ror-dev/nginx' }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Rails image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/app/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_RAILS_REPO }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_RAILS_REPO }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Nginx image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/nginx/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_NGINX_REPO }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_NGINX_REPO }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Image summary
+        run: |
+          echo "Pushed images:" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_RAILS_REPO }}:${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_NGINX_REPO }}:${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
