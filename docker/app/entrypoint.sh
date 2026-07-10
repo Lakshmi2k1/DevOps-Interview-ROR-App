@@ -4,10 +4,12 @@ set -e
 echo "bundle installation"
 bundle check || bundle install
 
-echo "database migartion"
-bundle exec rails db:create
-bundle exec rails db:schema:load
-bundle exec rails db:migrate
+echo "database migration (safe for production)"
+# db:prepare is idempotent and production-safe:
+# - creates DB if needed
+# - runs pending migrations
+# - avoids destructive schema:load in production
+bundle exec rails db:prepare
 
 if [ -f tmp/pids/server.pid ]; then
   rm tmp/pids/server.pid
