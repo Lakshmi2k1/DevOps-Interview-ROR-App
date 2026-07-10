@@ -20,7 +20,9 @@ services:
     image: webserver
     container_name: webserver
     ports:
-      - "8080:8080"
+      - "8080:80"
+    depends_on:
+      - rails_app
     networks:
       - app_network
 

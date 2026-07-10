@@ -1,0 +1,9 @@
+# Prettier does not understand Helm's Go-template syntax and corrupts the
+# `{{ ... }}` braces (turning them into `{ { ... } }`). Never format Helm
+# chart templates with it.
+infrastructure/helm/**/templates/
+
+# Generated / vendored Terraform artifacts
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*

@@ -8,10 +8,12 @@ local:
 
 amazon:
   service: S3
-  access_key_id: <%= ENV['ACCESS_KEY_ID']%>
-  secret_access_key: <%= ENV['SECRET_ACCESS_KEY']%>
-  bucket: <%= ENV['BUCKET']%>
-  region: <%= ENV['REGION']%>
+  # No access_key_id / secret_access_key on purpose: the AWS SDK resolves
+  # credentials via the default provider chain, which on EKS uses IRSA
+  # (IAM Roles for Service Accounts). This satisfies the requirement to
+  # integrate with S3 using IAM role authentication instead of static keys.
+  bucket: <%= ENV['S3_BUCKET_NAME'] %>
+  region: <%= ENV['S3_REGION_NAME'] %>
 
 # Use bin/rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
 # amazon:

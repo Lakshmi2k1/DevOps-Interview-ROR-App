@@ -1,0 +1,74 @@
+# Default values for the ror-app chart.
+# Values marked "from terraform output" are dynamic and should be supplied at
+# install time (see infrastructure/README.md).
+
+replicaCount: 2
+
+image:
+  # e.g. <account>.dkr.ecr.us-east-1.amazonaws.com/mallow-ror-dev/rails_app
+  rails:
+    repository: ""
+    tag: latest
+  # e.g. <account>.dkr.ecr.us-east-1.amazonaws.com/mallow-ror-dev/nginx
+  nginx:
+    repository: ""
+    tag: latest
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  # Must match app_service_account / app_namespace used by the Terraform IRSA role.
+  name: ror-app
+  # IAM role ARN for S3 access via IRSA (terraform output app_irsa_role_arn).
+  roleArn: ""
+
+# Non-sensitive environment variables (rendered into a ConfigMap).
+env:
+  RDS_DB_NAME: rails
+  RDS_USERNAME: postgres
+  RDS_HOSTNAME: "" # from terraform output rds_endpoint
+  RDS_PORT: "5432"
+  S3_BUCKET_NAME: "" # from terraform output s3_bucket_name
+  S3_REGION_NAME: us-east-1
+  # Full ALB hostname (from `kubectl get ingress`), added to Rails' host
+  # authorization allow-list (config.hosts).
+  LB_ENDPOINT: ""
+  RAILS_ENV: production
+  RACK_ENV: production
+  RAILS_LOG_TO_STDOUT: "true"
+  RAILS_SERVE_STATIC_FILES: "true"
+  RAILS_MAX_THREADS: "5"
+  PORT: "3000"
+
+# Sensitive environment variables (rendered into a Secret).
+secret:
+  # Required. Supply from AWS Secrets Manager at install time.
+  RDS_PASSWORD: ""
+  # Optional. Auto-generated and preserved across upgrades if left empty.
+  SECRET_KEY_BASE: ""
+
+service:
+  enabled: true
+  port: 80
+
+ingress:
+  enabled: true
+  className: alb
+  scheme: internet-facing
+  healthcheckPath: /healthz
+
+resources:
+  rails:
+    requests:
+      cpu: 150m
+      memory: 384Mi
+    limits:
+      memory: 768Mi
+  nginx:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+nameOverride: ""
+fullnameOverride: ""

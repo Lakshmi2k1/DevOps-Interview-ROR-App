@@ -1,0 +1,29 @@
+# Example overrides for `helm upgrade --install ror-app ... -f values.example.yaml`
+# Fill these in from `terraform output` (see infrastructure/README.md).
+# Do NOT commit real secrets.
+
+replicaCount: 2
+
+image:
+  rails:
+    repository: <account>.dkr.ecr.us-east-1.amazonaws.com/mallow-ror-dev/rails_app
+    tag: latest
+  nginx:
+    repository: <account>.dkr.ecr.us-east-1.amazonaws.com/mallow-ror-dev/nginx
+    tag: latest
+
+serviceAccount:
+  name: ror-app
+  roleArn: arn:aws:iam::<account>:role/mallow-ror-dev-app-s3 # terraform output app_irsa_role_arn
+
+env:
+  RDS_HOSTNAME: mallow-ror-dev-postgres.xxxxxxxx.us-east-1.rds.amazonaws.com # terraform output rds_endpoint
+  RDS_DB_NAME: rails
+  RDS_USERNAME: postgres
+  S3_BUCKET_NAME: mallow-ror-dev-media-xxxxxxxx # terraform output s3_bucket_name
+  S3_REGION_NAME: us-east-1
+
+secret:
+  # Prefer supplying this via --set from Secrets Manager instead of a file:
+  #   --set secret.RDS_PASSWORD="$(aws secretsmanager get-secret-value ... )"
+  RDS_PASSWORD: ""

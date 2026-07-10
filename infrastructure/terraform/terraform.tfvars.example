@@ -1,0 +1,28 @@
+# Copy this file to terraform.tfvars and adjust as needed.
+# All values below are optional because variables.tf provides sensible defaults.
+
+region      = "us-east-1"
+name_prefix = "mallow-ror"
+environment = "dev"
+
+# --- Networking ---
+vpc_cidr           = "10.0.0.0/16"
+az_count           = 2
+single_nat_gateway = true
+
+# --- EKS ---
+cluster_version     = "1.30"
+node_instance_types = ["t3.small"]
+node_desired_size   = 2
+node_min_size       = 2
+node_max_size       = 3
+
+# --- RDS ---
+db_engine_version = "13.23"
+db_instance_class = "db.t3.micro"
+db_name           = "rails"
+db_username       = "postgres"
+
+# --- CI (GitHub Actions OIDC) ---
+enable_github_oidc = true
+github_repo        = "Lakshmi2k1/DevOps-Interview-ROR-App"

@@ -1,0 +1,16 @@
+.git
+.gitignore
+.github
+infrastructure
+log/*
+tmp/*
+storage/*
+node_modules
+public/assets
+public/packs
+public/packs-test
+.env
+*.log
+README*.md
+ReadMe.md
+DevOps*.pdf
