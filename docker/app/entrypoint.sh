@@ -11,8 +11,11 @@ echo "database migration (safe for production)"
 # - avoids destructive schema:load in production
 bundle exec rails db:prepare
 
-if [ -f tmp/pids/server.pid ]; then
-  rm tmp/pids/server.pid
-fi
+# if [ -f tmp/pids/server.pid ]; then
+#   rm tmp/pids/server.pid
+# fi
+
+mkdir -p tmp/pids
+rm -f tmp/pids/server.pid
 
 exec "$@"
